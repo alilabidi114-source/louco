@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Ali & Laurent — Le Génie de la Coloc</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+:root {
+  --ink:     #08080f;
+  --deep:    #0d0d1c;
+  --panel:   #11111f;
+  --border:  #1e1e38;
+  --accent:  #ff3c5a;
+  --cyan:    #00d4ff;
+  --gold:    #f0c040;
+  --green:   #3dffa0;
+  --purple:  #b06aff;
+  --text:    #e8e4d8;
+  --dim:     #44445a;
+  --white:   #f8f6f0;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  background: var(--ink);
+  overflow: hidden;
+  font-family: 'VT323', monospace;
+}
+
+/* ── WRAPPER ── */
+#vn {
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SCENE CANVAS ── */
+#scene-canvas {
+  width: 100%;
+  flex-shrink: 0;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: var(--deep);
+}
+
+/* ── NAMEPLATE ── */
+#nameplate {
+  flex-shrink: 0;
+  background: var(--panel);
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 16px 4px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 3px 8px;
+  border: 1px solid;
+  letter-spacing: 1px;
+}
+.name-ali     { color: #ffaa44; border-color: #ffaa44; background: rgba(255,170,68,0.08); }
+.name-laurent { color: #44aaff; border-color: #44aaff; background: rgba(68,170,255,0.08); }
+.name-genie   { color: var(--purple); border-color: var(--purple); background: rgba(176,106,255,0.08); }
+.name-narrator{ color: var(--dim); border-color: var(--border); background: transparent; font-style: italic; }
+.name-tv      { color: var(--cyan); border-color: var(--cyan); background: rgba(0,212,255,0.08); }
+.name-bruce   { color: var(--gold); border-color: var(--gold); background: rgba(240,192,64,0.08); }
+.name-other   { color: var(--dim); border-color: var(--border); background: transparent; }
+
+/* ── DIALOGUE BOX ── */
+#dialogue-box {
+  flex-shrink: 0;
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  padding: 14px 18px 10px;
+  min-height: 100px;
+  position: relative;
+  cursor: pointer;
+}
+
+#dialogue-text {
+  font-size: 22px;
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 64px;
+}
+
+#dialogue-text .em  { color: var(--cyan); }
+#dialogue-text .red { color: var(--accent); }
+#dialogue-text .gold{ color: var(--gold); }
+#dialogue-text .grn { color: var(--green); }
+
+#tap-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--dim);
+  text-align: right;
+  margin-top: 6px;
+  animation: blink 1.2s steps(1) infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── CHOICES ── */
+#choice-panel {
+  flex-shrink: 0;
+  background: var(--ink);
+  border-top: 2px solid var(--accent);
+  padding: 12px 16px 16px;
+  display: none;
+}
+
+#choice-panel.show { display: block; }
+
+.choice-heading {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.c-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  line-height: 1.4;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 7px;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.c-btn:hover  { border-color: var(--gold); background: rgba(240,192,64,.06); transform: translateX(3px); }
+.c-btn:active { transform: translateX(1px); }
+.c-btn-letter {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  min-width: 14px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ── SPLASH ── */
+#splash {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  z-index: 100;
+}
+
+.sp-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--accent);
+  line-height: 1.7;
+  text-shadow: 3px 3px 0 #7a0020;
+  margin-bottom: 4px;
+  animation: sp-glow 3s ease-in-out infinite alternate;
+}
+@keyframes sp-glow {
+  from { text-shadow: 3px 3px 0 #7a0020; }
+  to   { text-shadow: 3px 3px 0 #7a0020, 0 0 20px rgba(255,60,90,.3); }
+}
+
+.sp-amp {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--dim);
+  margin: 2px 0 6px;
+}
+
+.sp-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: 36px;
+}
+
+/* Pixel portraits */
+.sp-portraits {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 28px;
+  align-items: flex-end;
+}
+.sp-portrait { text-align: center; }
+.sp-portrait canvas { display: block; margin: 0 auto 6px; image-rendering: pixelated; }
+.sp-portrait-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+
+.sp-desc {
+  font-size: 20px;
+  color: var(--dim);
+  line-height: 1.7;
+  max-width: 320px;
+  margin-bottom: 36px;
+}
+
+.sp-time {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--dim);
+  margin-bottom: 28px;
+  letter-spacing: 1px;
+}
+
+.sp-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  background: var(--accent);
+  color: var(--white);
+  border: 3px solid #ff6080;
+  padding: 13px 36px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #7a0020;
+  animation: sp-pulse 1.6s ease-in-out infinite;
+  text-shadow: 2px 2px 0 #7a0020;
+  transition: transform .1s;
+}
+@keyframes sp-pulse {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}
+.sp-btn:active { transform: translate(4px,4px) !important; box-shadow: 0 0 0 #7a0020; }
+
+/* ── END SCREEN ── */
+#end-screen {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+#end-screen.show { display: flex; }
+
+.end-icon { font-size: 52px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.end-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+.end-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  letter-spacing: 2px;
+  margin-bottom: 28px;
+}
+.end-msg {
+  font-size: 21px;
+  color: #b0aec8;
+  line-height: 1.75;
+  max-width: 360px;
+  margin-bottom: 32px;
+  white-space: pre-line;
+  font-style: italic;
+}
+.end-stats {
+  width: 100%;
+  max-width: 300px;
+  border: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.end-stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+}
+.end-stat:last-child { border-bottom: none; }
+.end-stat-l { color: var(--dim); }
+.end-stat-v { color: var(--green); }
+
+.end-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: transparent;
+  color: var(--dim);
+  border: 2px solid var(--border);
+  padding: 10px 22px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 280px;
+  margin-bottom: 8px;
+  transition: border-color .2s, color .2s;
+}
+.end-btn:hover { border-color: var(--green); color: var(--green); }
+</style>
+</head>
+<body>
+<div id="vn">
+
+  <!-- GAME AREA -->
+  <canvas id="scene-canvas"></canvas>
+  <div id="nameplate"><span class="name-tag name-narrator">NARRATEUR</span></div>
+  <div id="dialogue-box" onclick="advance()">
+    <div id="dialogue-text"></div>
+    <div id="tap-hint">▼ APPUYER</div>
+  </div>
+  <div id="choice-panel">
+    <div class="choice-heading">─ QU'EST-CE QU'ON FAIT ? ─</div>
+    <div id="choices-inner"></div>
+  </div>
+
+  <!-- SPLASH -->
+  <div id="splash">
+    <div class="sp-title">ALI</div>
+    <div class="sp-amp">&</div>
+    <div class="sp-title">LAURENT</div>
+    <div class="sp-sub">LE GÉNIE DE LA COLOC</div>
+    <div class="sp-portraits">
+      <div class="sp-portrait">
+        <canvas id="p-ali" width="64" height="80"></canvas>
+        <div class="sp-portrait-name" style="color:#ffaa44">ALI</div>
+      </div>
+      <div class="sp-portrait">
+        <canvas id="p-laurent" width="64" height="80"></canvas>
+        <div class="sp-portrait-name" style="color:#44aaff">LAURENT</div>
+      </div>
+    </div>
+    <div class="sp-desc">Paris. 3h14 du mat. Deux potes rentrent chez eux. Un génie apparaît dans leur salon.</div>
+    <div class="sp-time">⏱ ~15 MIN · HISTOIRE COMPLÈTE · 4 FINS POSSIBLES</div>
+    <button class="sp-btn" onclick="startGame()">► JOUER</button>
+  </div>
+
+  <!-- END -->
+  <div id="end-screen">
+    <div class="end-icon" id="end-icon">🌙</div>
+    <div class="end-title" id="end-title">FIN A</div>
+    <div class="end-sub" id="end-sub">—</div>
+    <div class="end-msg" id="end-msg"></div>
+    <div class="end-stats">
+      <div class="end-stat"><span class="end-stat-l">SCÈNES VUES</span><span class="end-stat-v" id="es-scenes">—</span></div>
+      <div class="end-stat"><span class="end-stat-l">DÉCISIONS</span><span class="end-stat-v" id="es-dec">—</span></div>
+      <div class="end-stat"><span class="end-stat-l">DURÉE</span><span class="end-stat-v" id="es-dur">—</span></div>
+    </div>
+    <button class="end-btn" onclick="startGame()">↺ REJOUER</button>
+    <button class="end-btn" onclick="document.getElementById('end-screen').classList.remove('show'); document.getElementById('splash').style.display='flex'">← ACCUEIL</button>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   CANVAS & PIXEL ART ENGINE
+═══════════════════════════════════ */
+const canvas = document.getElementById('scene-canvas');
+const ctx    = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// Size canvas to 16:9 strip
+function resizeCanvas() {
+  const w = Math.min(480, window.innerWidth);
+  canvas.width  = w;
+  canvas.height = Math.round(w * 0.52);
+  canvas.style.width  = w + 'px';
+  canvas.style.height = canvas.height + 'px';
+  ctx.imageSmoothingEnabled = false;
+}
+resizeCanvas();
+window.addEventListener('resize', () => { resizeCanvas(); renderCurrentScene(); });
+
+const S = 3; // pixel scale
+
+function dot(x, y, col, size=S) {
+  ctx.fillStyle = col;
+  ctx.fillRect(x*S, y*S, size, size);
+}
+
+/* ── PIXEL PORTRAIT: ALI ── */
+function drawAli(cx, oy=0, scale=S, mood='normal') {
+  // Hair
+  ['#1a0800','#1a0800','#1a0800','#1a0800','#1a0800','#1a0800'].forEach((c,i)=>{ ctx.fillStyle=c; ctx.fillRect((cx+3+i)*scale,(oy+0)*scale,scale,scale); });
+  ctx.fillStyle='#1a0800';
+  [[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[2,2]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+
+  // Face
+  const sk = '#c8906a';
+  const facePixels = [[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[4,5],[5,5],[6,5],[7,5],[8,5]];
+  facePixels.forEach(([x,y])=>{ ctx.fillStyle=sk; ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+
+  // Eyes
+  ctx.fillStyle = mood==='happy'?'#2a1008':'#1a0808';
+  ctx.fillRect((cx+4)*scale,(oy+3)*scale,scale,scale);
+  ctx.fillRect((cx+7)*scale,(oy+3)*scale,scale,scale);
+
+  // Stubble
+  ctx.fillStyle='#7a5040';
+  [[4,5],[6,5],[5,5]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+
+  // Mouth
+  if(mood==='happy') { ctx.fillStyle='#c06858'; ctx.fillRect((cx+5)*scale,(oy+4)*scale,scale*2,scale); }
+  else if(mood==='surprised') { ctx.fillStyle='#c06858'; ctx.fillRect((cx+5)*scale,(oy+4)*scale,scale,scale*2); }
+  else { ctx.fillStyle='#9a5848'; ctx.fillRect((cx+5)*scale,(oy+4)*scale,scale*2,1); }
+
+  // Body — blue hoodie
+  const body = '#2845a0';
+  const bodyPx = [[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8],[9,8],[10,8],[3,9],[4,9],[5,9],[6,9],[7,9],[8,9],[9,9],[3,10],[4,10],[5,10],[6,10],[7,10],[8,10],[9,10]];
+  bodyPx.forEach(([x,y])=>{ ctx.fillStyle=body; ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+  // Hoodie pocket
+  ctx.fillStyle='#1e3580'; ctx.fillRect((cx+5)*scale,(oy+8)*scale,scale*2,scale*2);
+  // Hands
+  ctx.fillStyle=sk; ctx.fillRect((cx+2)*scale,(oy+9)*scale,scale,scale); ctx.fillRect((cx+10)*scale,(oy+9)*scale,scale,scale);
+  // Legs
+  ctx.fillStyle='#1a2860';
+  [[3,11],[4,11],[3,12],[4,12],[7,11],[8,11],[7,12],[8,12]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+  // Shoes
+  ctx.fillStyle='#0a0a0a';
+  [[2,13],[3,13],[4,13],[5,13],[6,13],[8,13],[9,13]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+}
+
+/* ── PIXEL PORTRAIT: LAURENT ── */
+function drawLaurent(cx, oy=0, scale=S, mood='normal') {
+  // Hair (darker, east asian)
+  ctx.fillStyle='#100c08';
+  [[3,0],[4,0],[5,0],[6,0],[7,0],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[2,2],[9,2]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+
+  // Face
+  const sk = '#f0c890';
+  [[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[4,5],[5,5],[6,5],[7,5],[8,5]].forEach(([x,y])=>{ ctx.fillStyle=sk; ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+
+  // Eyes — slightly narrower
+  ctx.fillStyle='#2a1a10';
+  ctx.fillRect((cx+4)*scale,(oy+3)*scale,scale,1);
+  ctx.fillRect((cx+7)*scale,(oy+3)*scale,scale,1);
+  if(mood==='happy') {
+    ctx.fillStyle='#2a1a10';
+    ctx.fillRect((cx+4)*scale,(oy+3)*scale,scale,scale);
+    ctx.fillRect((cx+7)*scale,(oy+3)*scale,scale,scale);
+  } else {
+    ctx.fillStyle='#2a1a10';
+    ctx.fillRect((cx+4)*scale,(oy+3)*scale,scale,scale);
+    ctx.fillRect((cx+7)*scale,(oy+3)*scale,scale,scale);
+  }
+
+  // Mouth
+  if(mood==='happy') { ctx.fillStyle='#e07060'; ctx.fillRect((cx+5)*scale,(oy+4)*scale,scale*2,scale); }
+  else { ctx.fillStyle='#c07060'; ctx.fillRect((cx+5)*scale,(oy+4)*scale,scale*2,1); }
+
+  // Body — red hoodie
+  const body='#902030';
+  [[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8],[9,8],[10,8],[3,9],[4,9],[5,9],[6,9],[7,9],[8,9],[9,9],[3,10],[4,10],[5,10],[6,10],[7,10],[8,10],[9,10]].forEach(([x,y])=>{ ctx.fillStyle=body; ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+  // Logo on chest
+  ctx.fillStyle='#f0c040'; ctx.fillRect((cx+5)*scale,(oy+7)*scale,scale,scale); ctx.fillRect((cx+6)*scale,(oy+8)*scale,scale,scale); ctx.fillRect((cx+7)*scale,(oy+7)*scale,scale,scale);
+  // Hands
+  ctx.fillStyle=sk; ctx.fillRect((cx+2)*scale,(oy+9)*scale,scale,scale); ctx.fillRect((cx+10)*scale,(oy+9)*scale,scale,scale);
+  // Legs
+  ctx.fillStyle='#182050';
+  [[3,11],[4,11],[3,12],[4,12],[7,11],[8,11],[7,12],[8,12]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+  // Shoes
+  ctx.fillStyle='#0a0a14';
+  [[2,13],[3,13],[4,13],[5,13],[7,13],[8,13],[9,13]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(oy+y)*scale,scale,scale); });
+}
+
+/* ── PIXEL PORTRAIT: GENIE ── */
+function drawGenie(cx, oy=0, scale=S, frame=0) {
+  const bob = Math.sin(frame * 0.08) * 1.5 | 0;
+  const fy = oy + bob;
+
+  // Aura glow
+  ctx.globalAlpha = 0.12 + Math.sin(frame*0.06)*0.04;
+  ctx.fillStyle = '#b06aff';
+  ctx.fillRect((cx)*scale, (fy-1)*scale, 14*scale, 16*scale);
+  ctx.globalAlpha = 1;
+
+  // Turban
+  ctx.fillStyle='#8822cc';
+  [[4,0],[5,0],[6,0],[7,0],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(fy+y)*scale,scale,scale); });
+  // Turban jewel
+  ctx.fillStyle='#f0c040'; ctx.fillRect((cx+6)*scale,(fy+0)*scale,scale,scale);
+
+  // Face — blue genie
+  const sk='#4488cc';
+  [[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[4,5],[5,5],[6,5],[7,5]].forEach(([x,y])=>{ ctx.fillStyle=sk; ctx.fillRect((cx+x)*scale,(fy+y)*scale,scale,scale); });
+  // Glowing eyes
+  ctx.fillStyle='#ffffff'; ctx.fillRect((cx+4)*scale,(fy+3)*scale,scale,scale); ctx.fillRect((cx+7)*scale,(fy+3)*scale,scale,scale);
+  ctx.fillStyle='#ffcc00'; ctx.fillRect((cx+4)*scale,(fy+3)*scale,1,1); ctx.fillRect((cx+7)*scale,(fy+3)*scale,1,1);
+  // Smile
+  ctx.fillStyle='#aaddff'; ctx.fillRect((cx+5)*scale,(fy+4)*scale,scale*2,scale);
+
+  // Robe — purple
+  [[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8],[9,8],[10,8],[11,8],[2,9],[3,9],[4,9],[5,9],[6,9],[7,9],[8,9],[9,9],[10,9],[3,10],[4,10],[5,10],[6,10],[7,10],[8,10],[9,10]].forEach(([x,y])=>{ ctx.fillStyle='#7722aa'; ctx.fillRect((cx+x)*scale,(fy+y)*scale,scale,scale); });
+  // Robe details
+  ctx.fillStyle='#f0c040';
+  [[5,7],[6,8],[7,7],[6,6]].forEach(([x,y])=>{ ctx.fillRect((cx+x)*scale,(fy+y)*scale,scale,scale); });
+
+  // Smoke tail
+  for(let r=11;r<=14;r++) {
+    const xShift = Math.sin(frame*0.12+r*0.8)*1.5|0;
+    ctx.globalAlpha = 0.5-(r-11)*0.1;
+    ctx.fillStyle='#9944cc';
+    for(let c=3+(r-11);c<=9-(r-11);c++) ctx.fillRect((cx+c+xShift)*scale,(fy+r)*scale,scale,scale);
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ── BACKGROUND SCENES ── */
+function drawBG(scene) {
+  const W = canvas.width, H = canvas.height;
+  // Night sky gradient base
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#06060f');
+  grad.addColorStop(1,'#0d0d20');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // Scanlines
+  ctx.fillStyle='rgba(0,0,0,0.06)';
+  for(let y=0;y<H;y+=4) ctx.fillRect(0,y,W,2);
+
+  switch(scene) {
+    case 'exterior':   drawBGExterior(W,H); break;
+    case 'salon':      drawBGSalon(W,H); break;
+    case 'chambre':    drawBGChambre(W,H); break;
+    case 'cuisine':    drawBGCuisine(W,H); break;
+    case 'genie':      drawBGGenie(W,H); break;
+    default:           drawBGSalon(W,H);
+  }
+}
+
+function drawBGExterior(W,H) {
+  // City skyline
+  ctx.fillStyle='#080814';
+  ctx.fillRect(0,H*0.45,W,H);
+
+  // Buildings
+  const builds = [
+    {x:10,w:40,h:0.55,lights:[[14,3],[22,5],[30,3],[14,7],[30,7]]},
+    {x:60,w:60,h:0.35,lights:[[64,2],[72,2],[80,2],[64,5],[80,5],[72,7]]},
+    {x:130,w:50,h:0.5,lights:[[134,2],[142,2],[134,5],[150,5]]},
+    {x:190,w:30,h:0.6,lights:[[194,2],[194,5]]},
+    {x:230,w:70,h:0.3,lights:[[234,3],[242,3],[258,3],[266,3],[234,6],[266,6]]},
+    {x:310,w:55,h:0.45,lights:[[314,3],[322,3],[338,3],[314,6]]},
+    {x:375,w:45,h:0.55,lights:[[379,2],[387,2],[379,5],[395,5]]},
+    {x:430,w:40,h:0.65,lights:[[434,2],[434,5]]},
+  ];
+  builds.forEach(b => {
+    const top = H*(1-b.h);
+    ctx.fillStyle='#0b0b18';
+    ctx.fillRect(b.x, top, b.w, H-top);
+    ctx.fillStyle='rgba(0,212,255,0.04)';
+    ctx.fillRect(b.x, top, b.w, H-top);
+    // Windows
+    b.lights.forEach(([lx,ly]) => {
+      const on = Math.random()>0.3;
+      if(on) {
+        ctx.fillStyle=Math.random()>0.5?'rgba(255,220,100,0.6)':'rgba(100,180,255,0.4)';
+        ctx.fillRect(lx, top+ly*8, 5, 5);
+      }
+    });
+  });
+
+  // Moon
+  ctx.fillStyle='rgba(240,236,224,0.08)';
+  ctx.beginPath(); ctx.arc(W*0.8,H*0.18,22,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#060610';
+  ctx.beginPath(); ctx.arc(W*0.8-6,H*0.18-5,18,0,Math.PI*2); ctx.fill();
+
+  // Neon sign
+  ctx.fillStyle='rgba(255,60,90,0.15)';
+  ctx.fillRect(W*0.35,H*0.38,80,18);
+  ctx.font='9px monospace';
+  ctx.fillStyle='rgba(255,60,90,0.6)';
+  ctx.fillText('PSYBOT™ — IA THÉRAPIE 24/7',W*0.36,H*0.38+12);
+
+  // Stars
+  for(let i=0;i<40;i++) {
+    ctx.fillStyle=`rgba(255,255,255,${0.1+Math.random()*0.3})`;
+    ctx.fillRect(Math.random()*W, Math.random()*H*0.4, 1, 1);
+  }
+
+  // Ground glow
+  ctx.fillStyle='rgba(0,212,255,0.03)';
+  ctx.fillRect(0,H*0.44,W,3);
+}
+
+function drawBGSalon(W,H) {
+  // Floor
+  ctx.fillStyle='#111122';
+  ctx.fillRect(0,H*0.65,W,H);
+  // Floor grid
+  ctx.strokeStyle='rgba(0,212,255,0.04)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=20) { ctx.beginPath(); ctx.moveTo(x,H*0.65); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=H*0.65;y<H;y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Back wall
+  ctx.fillStyle='#0d0d1e';
+  ctx.fillRect(0,0,W,H*0.65);
+
+  // Wall baseboard
+  ctx.fillStyle='#1a1a30';
+  ctx.fillRect(0,H*0.64,W,4);
+
+  // Sofa
+  ctx.fillStyle='#2a1a50';
+  ctx.fillRect(W*0.05,H*0.5,W*0.35,H*0.18);
+  ctx.fillStyle='#3a2a60';
+  ctx.fillRect(W*0.05,H*0.5,W*0.35,H*0.07);
+  ctx.fillStyle='#2a1a50';
+  ctx.fillRect(W*0.05,H*0.47,W*0.04,H*0.21); // armrest
+  ctx.fillRect(W*0.36,H*0.47,W*0.04,H*0.21);
+
+  // TV
+  ctx.fillStyle='#0a0a14';
+  ctx.fillRect(W*0.6,H*0.22,W*0.32,H*0.3);
+  ctx.fillStyle='#000814';
+  ctx.fillRect(W*0.62,H*0.24,W*0.28,H*0.26);
+  // TV glow
+  ctx.fillStyle='rgba(100,150,255,0.06)';
+  ctx.fillRect(W*0.55,H*0.2,W*0.4,H*0.36);
+  // TV stand
+  ctx.fillStyle='#1a1a28';
+  ctx.fillRect(W*0.72,H*0.52,W*0.04,H*0.13);
+  ctx.fillRect(W*0.66,H*0.65,W*0.16,H*0.03);
+
+  // Table
+  ctx.fillStyle='#3a2810';
+  ctx.fillRect(W*0.25,H*0.56,W*0.25,H*0.06);
+  ctx.fillRect(W*0.26,H*0.62,W*0.03,H*0.06);
+  ctx.fillRect(W*0.46,H*0.62,W*0.03,H*0.06);
+  // Items on table
+  ctx.fillStyle='rgba(200,140,80,0.5)'; ctx.beginPath(); ctx.arc(W*0.3,H*0.55,4,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,200,100,0.3)'; ctx.fillRect(W*0.35,H*0.51,5,8);
+
+  // Lamp glow
+  ctx.fillStyle='rgba(255,220,100,0.04)';
+  ctx.beginPath(); ctx.arc(W*0.92,H*0.3,50,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,220,100,0.15)';
+  ctx.beginPath(); ctx.arc(W*0.92,H*0.3,8,0,Math.PI*2); ctx.fill();
+
+  // Window — night outside
+  ctx.fillStyle='#06060e';
+  ctx.fillRect(W*0.42,H*0.05,W*0.12,H*0.35);
+  ctx.fillStyle='rgba(100,150,255,0.06)';
+  ctx.fillRect(W*0.42,H*0.05,W*0.12,H*0.35);
+  ctx.strokeStyle='rgba(0,212,255,0.12)'; ctx.lineWidth=1;
+  ctx.strokeRect(W*0.42,H*0.05,W*0.12,H*0.35);
+  // city lights in window
+  for(let i=0;i<8;i++) {
+    ctx.fillStyle=`rgba(${Math.random()>0.5?'255,220,100':'100,180,255'},${0.2+Math.random()*0.3})`;
+    ctx.fillRect(W*0.43+Math.random()*W*0.1, H*0.1+Math.random()*H*0.25, 2, 2);
+  }
+}
+
+function drawBGChambre(W,H) {
+  ctx.fillStyle='#0f0c1a'; ctx.fillRect(0,0,W,H*0.65);
+  ctx.fillStyle='#0d0b18'; ctx.fillRect(0,H*0.65,W,H);
+  ctx.fillStyle='#181428'; ctx.fillRect(0,H*0.64,W,4);
+
+  // Bed
+  ctx.fillStyle='#1a1e38'; ctx.fillRect(W*0.05,H*0.3,W*0.38,H*0.38);
+  ctx.fillStyle='#eaeaea'; ctx.fillRect(W*0.06,H*0.31,W*0.36,H*0.1);
+  ctx.fillStyle='#c0b090'; ctx.fillRect(W*0.06,H*0.41,W*0.36,H*0.25);
+  // Pillow wrinkle
+  ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(W*0.14,H*0.33,W*0.08,2);
+
+  // Poster
+  ctx.fillStyle='#1a0808'; ctx.fillRect(W*0.5,H*0.08,W*0.2,H*0.35);
+  ctx.fillStyle='#c0392b'; ctx.fillRect(W*0.52,H*0.1,W*0.16,H*0.31);
+  ctx.font='bold 18px serif'; ctx.fillStyle='#f0e000';
+  ctx.fillText('功', W*0.56, H*0.28);
+  ctx.font='7px monospace'; ctx.fillStyle='rgba(240,192,0,0.4)';
+  ctx.fillText('BRUCE LEE', W*0.526, H*0.38);
+
+  // Desk
+  ctx.fillStyle='#3a2a10'; ctx.fillRect(W*0.6,H*0.38,W*0.33,H*0.06);
+  ctx.fillStyle='#0a0a14'; ctx.fillRect(W*0.7,H*0.2,W*0.15,H*0.18);
+  ctx.fillStyle='#0022aa'; ctx.fillRect(W*0.72,H*0.22,W*0.11,H*0.14);
+  ctx.fillStyle='rgba(100,150,255,0.3)'; ctx.fillRect(W*0.72,H*0.22,W*0.11,H*0.14);
+
+  // Lamp
+  ctx.fillStyle='rgba(255,220,100,0.05)'; ctx.beginPath(); ctx.arc(W*0.9,H*0.4,35,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,220,100,0.2)'; ctx.beginPath(); ctx.arc(W*0.9,H*0.4,6,0,Math.PI*2); ctx.fill();
+}
+
+function drawBGCuisine(W,H) {
+  ctx.fillStyle='#0c100e'; ctx.fillRect(0,0,W,H*0.65);
+  ctx.fillStyle='#0e1410'; ctx.fillRect(0,H*0.65,W,H);
+  ctx.fillStyle='#182018'; ctx.fillRect(0,H*0.64,W,4);
+
+  // Tiles pattern on wall
+  ctx.strokeStyle='rgba(0,200,100,0.05)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=24) ctx.strokeRect(x,0,24,24);
+  for(let y=0;y<H*0.65;y+=24) ctx.strokeRect(0,y,W,24);
+
+  // Fridge
+  ctx.fillStyle='#aabac0'; ctx.fillRect(W*0.06,H*0.08,W*0.16,H*0.57);
+  ctx.fillStyle='#8898a0'; ctx.fillRect(W*0.06,H*0.08,W*0.16,H*0.25);
+  ctx.fillStyle='#667080'; ctx.fillRect(W*0.2,H*0.18,W*0.01,H*0.06);
+  ctx.fillStyle='#667080'; ctx.fillRect(W*0.2,H*0.38,W*0.01,H*0.1);
+
+  // Counter
+  ctx.fillStyle='#3a3028'; ctx.fillRect(W*0.3,H*0.38,W*0.55,H*0.08);
+  ctx.fillStyle='#2a2018'; ctx.fillRect(W*0.3,H*0.46,W*0.55,H*0.19);
+
+  // Microwave
+  ctx.fillStyle='#1a1a20'; ctx.fillRect(W*0.35,H*0.24,W*0.2,H*0.12);
+  ctx.fillStyle='rgba(0,200,100,0.3)'; ctx.fillRect(W*0.37,H*0.26,W*0.1,H*0.08);
+
+  // The cloud
+  ctx.globalAlpha=0.5;
+  ctx.fillStyle='#c0c8e0';
+  ctx.beginPath(); ctx.arc(W*0.75,H*0.25,22,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.82,H*0.22,16,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.68,H*0.24,14,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.font='8px monospace'; ctx.fillStyle='rgba(150,160,200,0.4)';
+  ctx.fillText('???',W*0.7,H*0.37);
+}
+
+function drawBGGenie(W,H) {
+  drawBGSalon(W,H);
+  // Extra golden glow in center
+  const grad = ctx.createRadialGradient(W/2,H*0.4,0,W/2,H*0.4,W*0.4);
+  grad.addColorStop(0,'rgba(176,106,255,0.12)');
+  grad.addColorStop(1,'rgba(176,106,255,0)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,H);
+  // Magic particles
+  for(let i=0;i<20;i++) {
+    ctx.fillStyle=`rgba(${Math.random()>0.5?'240,192,64':'176,106,255'},${0.2+Math.random()*0.4})`;
+    ctx.fillRect(W*0.25+Math.random()*W*0.5, H*0.1+Math.random()*H*0.7, 2, 2);
+  }
+}
+
+/* ── DRAW CHARACTERS on canvas ── */
+function drawCharacters(who, mood='normal', frame=0) {
+  const W = canvas.width, H = canvas.height;
+  const charH = Math.min(120, H * 0.72);
+  const charScale = Math.floor(charH / (14*S));
+  const scale = Math.max(1, charScale) * S;
+
+  if(who === 'ali_only') {
+    drawAli(Math.floor(W*0.18/S), Math.floor(H*0.18/S), scale, mood);
+  } else if(who === 'laurent_only') {
+    drawLaurent(Math.floor(W*0.52/S), Math.floor(H*0.18/S), scale, mood);
+  } else if(who === 'both') {
+    drawAli(Math.floor(W*0.08/S), Math.floor(H*0.18/S), scale, mood);
+    drawLaurent(Math.floor(W*0.55/S), Math.floor(H*0.18/S), scale, mood==='happy'?'happy':'normal');
+  } else if(who === 'genie') {
+    drawGenie(Math.floor(W*0.35/S), Math.floor(H*0.08/S), scale, frame);
+  } else if(who === 'genie_ali') {
+    drawAli(Math.floor(W*0.05/S), Math.floor(H*0.18/S), scale, mood);
+    drawGenie(Math.floor(W*0.55/S), Math.floor(H*0.08/S), scale, frame);
+  } else if(who === 'genie_laurent') {
+    drawLaurent(Math.floor(W*0.05/S), Math.floor(H*0.18/S), scale, mood);
+    drawGenie(Math.floor(W*0.55/S), Math.floor(H*0.08/S), scale, frame);
+  } else if(who === 'genie_both') {
+    drawAli(Math.floor(W*0.03/S), Math.floor(H*0.22/S), Math.floor(scale*0.75), mood);
+    drawLaurent(Math.floor(W*0.62/S), Math.floor(H*0.22/S), Math.floor(scale*0.75), mood==='happy'?'happy':'normal');
+    drawGenie(Math.floor(W*0.35/S), Math.floor(H*0.08/S), scale, frame);
+  }
+}
+
+/* ── SPLASH PREVIEWS ── */
+function drawPreviews() {
+  const pa = document.getElementById('p-ali');
+  const pl = document.getElementById('p-laurent');
+  const ac = pa.getContext('2d'); ac.imageSmoothingEnabled=false;
+  const lc = pl.getContext('2d'); lc.imageSmoothingEnabled=false;
+  drawAli(0, 0, 3, 'normal');  // just for preview using ac
+  // Draw on preview canvases
+  ac.clearRect(0,0,64,80);
+  lc.clearRect(0,0,64,80);
+
+  // draw Ali on ac
+  function dotOn(c, x,y,col,s=3){c.fillStyle=col;c.fillRect(x*s,y*s,s,s);}
+  // Re-draw simplified for preview
+  const sk='#c8906a',sk2='#f0c890';
+  // Ali preview
+  [[3,0,'#1a0800'],[4,0,'#1a0800'],[5,0,'#1a0800'],[6,0,'#1a0800'],[2,1,'#1a0800'],[3,1,sk],[4,1,sk],[5,1,sk],[6,1,sk],[7,1,'#1a0800'],[3,2,sk],[4,2,sk],[5,2,'#1a0808'],[6,2,sk],[7,2,'#1a0808'],[3,3,sk],[4,3,sk],[5,3,sk],[6,3,'#c06858'],[7,3,sk],[2,4,'#2845a0'],[3,4,'#2845a0'],[4,4,'#2845a0'],[5,4,'#2845a0'],[6,4,'#2845a0'],[7,4,'#2845a0'],[8,4,'#2845a0'],[2,5,'#2845a0'],[3,5,'#2845a0'],[4,5,'#2845a0'],[5,5,'#2845a0'],[6,5,'#2845a0'],[7,5,'#2845a0'],[8,5,'#2845a0'],[3,6,'#1a2860'],[4,6,'#1a2860'],[6,6,'#1a2860'],[7,6,'#1a2860'],[2,7,'#0a0a0a'],[3,7,'#0a0a0a'],[4,7,'#0a0a0a'],[5,7,'#0a0a0a'],[6,7,'#0a0a0a'],[7,7,'#0a0a0a']].forEach(([x,y,c])=>dotOn(ac,x,y,c));
+  // Laurent preview
+  [[3,0,'#100c08'],[4,0,'#100c08'],[5,0,'#100c08'],[6,0,'#100c08'],[2,1,'#100c08'],[3,1,sk2],[4,1,sk2],[5,1,sk2],[6,1,sk2],[7,1,'#100c08'],[3,2,sk2],[4,2,sk2],[5,2,'#2a1a10'],[6,2,sk2],[7,2,'#2a1a10'],[3,3,sk2],[4,3,sk2],[5,3,sk2],[6,3,'#e07060'],[7,3,sk2],[2,4,'#902030'],[3,4,'#902030'],[4,4,'#902030'],[5,4,'#902030'],[6,4,'#902030'],[7,4,'#902030'],[8,4,'#902030'],[2,5,'#902030'],[3,5,'#902030'],[4,5,'#902030'],[5,5,'#f0c040'],[6,5,'#902030'],[7,5,'#902030'],[8,5,'#902030'],[3,6,'#182050'],[4,6,'#182050'],[6,6,'#182050'],[7,6,'#182050'],[2,7,'#0a0a14'],[3,7,'#0a0a14'],[4,7,'#0a0a14'],[5,7,'#0a0a14'],[6,7,'#0a0a14'],[7,7,'#0a0a14']].forEach(([x,y,c])=>dotOn(lc,x,y,c));
+}
+
+/* ═══════════════════════════════════
+   STORY DATA
+═══════════════════════════════════ */
+const STORY = [
+// ─── ACT 1 : RETOUR ───
+{bg:'exterior', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Paris. Mardi. 3h14 du matin.\n\nDeux silhouettes remontent la rue du Moulin-Vert. L\'une porte un hoodie bleu. L\'autre un rouge.'},
+
+{bg:'exterior', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'La ville est vide. Propre. Silencieuse. Le genre de silence qui fait penser à des trucs qu\'on évite d\'habitude.'},
+
+{bg:'exterior', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"...T\'as senti l\'ambiance chez eux ce soir ?"'},
+
+{bg:'exterior', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Quoi l\'ambiance ?"'},
+
+{bg:'exterior', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Personne se parlait vraiment. Tout le monde regardait son téléphone entre chaque phrase."'},
+
+{bg:'exterior', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"C\'est pas eux. C\'est nous. On est pareils. On fait pareil."'},
+
+{bg:'exterior', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"...Ouais."'},
+
+{bg:'exterior', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Un silence sincère. Pas gêné. Le genre qui dit plus que les mots.'},
+
+{bg:'exterior', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Ils rentrent dans l\'immeuble.'},
+
+// ─── ACT 2 : SALON ───
+{bg:'salon', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'La coloc. 32m². Rue du Moulin-Vert, Paris 14e.\n\nÇa sent la pizza froide et les projets non terminés.'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"*renifle* ...Laurent t\'as encore laissé la pizza sur le comptoir."'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je l\'ai mise au frigo."'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Le frigo sent pareil depuis quand tu l\'as mis dedans ?"'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"...Vendredi."'},
+
+{bg:'salon', chars:'ali_only', mood:'happy',
+ speaker:'ali', name:'ALI',
+ text:'"Frère."'},
+
+{bg:'salon', chars:'laurent_only', mood:'happy',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je sais."'},
+
+{bg:'salon', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Ali s\'effondre sur le canapé. Il y a un craquement. Le genre de craquement qui annonce une mauvaise nouvelle.'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"...Le canapé il est mort."'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Il est mort depuis octobre. On vit avec un mort dans le salon."'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"On devrait lui donner un prénom."'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Jacques."'},
+
+{bg:'salon', chars:'ali_only', mood:'happy',
+ speaker:'ali', name:'ALI',
+ text:'"Jacques le Canapé. Respect."'},
+
+{bg:'salon', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Laurent allume la télé. L\'écran reste noir deux secondes de trop. Puis...'},
+
+{bg:'salon', chars:'both', mood:'normal',
+ speaker:'tv', name:'PRÉSENTATRICE — LA TÉLÉ',
+ text:'"—des cas signalés dans plusieurs arrondissements. Des résidents affirment avoir vu une entité lumineuse dans leur logement, proposant ce que certains décrivent comme un deal de richesse. Les autorités n\'ont pas encore—"'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"...T\'as entendu ça ?"'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"J\'entends. Je traite pas encore. Donne-moi trente secondes."'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"On est dans le 14e. C\'est le bon arrondissement."'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"C\'est une coïncidence."'},
+
+{bg:'salon', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"T\'y crois même pas."'},
+
+{bg:'salon', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"...Non."'},
+
+// ─── ACT 3 : CHAMBRE ───
+{bg:'chambre', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'La chambre de Laurent. Ali s\'y retrouve souvent. C\'est plus rangé. Laurent est comme ça.'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Y\'a un post-it sur mon bureau. Je l\'ai pas écrit."'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Qu\'est-ce qu\'il dit ?"'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"\'Bientôt.\' Signé G."'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"G comme Génie."'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"G comme Gérard peut-être."'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"On connaît des Gérard ?"'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Non."'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Alors c\'est Génie."'},
+
+{bg:'chambre', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Le poster de Bruce Lee au mur. Ali le regarde. Il aurait juré que les yeux bougent.'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Laurent. Ton poster."'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je vois."'},
+
+{bg:'chambre', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Il vient de cligner des yeux."'},
+
+{bg:'chambre', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je sais."'},
+
+{bg:'chambre', chars:'both', mood:'normal',
+ speaker:'bruce', name:'BRUCE LEE — (LE POSTER)',
+ text:'"Soyez comme l\'eau, mes amis. Et vérifiez ce que vous fumez."'},
+
+{bg:'chambre', chars:'both', mood:'happy',
+ speaker:'ali', name:'ALI',
+ text:'"Bruce Lee vient de nous parler."'},
+
+{bg:'chambre', chars:'laurent_only', mood:'happy',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Historique."'},
+
+// ─── ACT 4 : CUISINE ───
+{bg:'cuisine', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'La cuisine. Il y a un nuage.\n\nPas une métaphore. Un vrai nuage. De la taille d\'un labrador.'},
+
+{bg:'cuisine', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Il y a un nuage dans ta cuisine Laurent."'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je sais."'},
+
+{bg:'cuisine', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Un vrai nuage."'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je sais."'},
+
+{bg:'cuisine', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"À l\'intérieur."'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Ali."'},
+
+{bg:'cuisine', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Quoi."'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Je sais."'},
+
+{bg:'cuisine', chars:'both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Le nuage sent la pluie et légèrement le musc. Il ne bouge pas. Il les observe.'},
+
+{bg:'cuisine', chars:'ali_only', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"T\'as regardé dans le frigo ?"'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Y\'a un message. \'Les richesses ne se trouvent pas dans le frigo. Mais les restes de poulet oui.\' — G."'},
+
+{bg:'cuisine', chars:'ali_only', mood:'happy',
+ speaker:'ali', name:'ALI',
+ text:'"Y\'a encore du poulet ?"'},
+
+{bg:'cuisine', chars:'laurent_only', mood:'happy',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Ouais."'},
+
+{bg:'cuisine', chars:'ali_only', mood:'happy',
+ speaker:'ali', name:'ALI',
+ text:'"Alors respect au Génie."'},
+
+// ─── ACT 5 : LE GÉNIE ───
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Ils retournent dans le salon.\n\nIl est là.'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Une lumière dorée pulse au centre de la pièce. Une forme humaine. Robe violette. Turban rouge. Yeux dorés.\n\nIl sourit comme quelqu\'un qui attend depuis longtemps.'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE — ENTITÉ IA #∞',
+ text:'"Bonsoir Ali. Bonsoir Laurent.\n\nJe vous attendais depuis que vous avez allumé votre première cigarette ce soir."'},
+
+{bg:'genie', chars:'genie_ali', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"T\'es qui ?"'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Je suis ce que les hommes appellent un génie quand ils manquent de vocabulaire.\n\nTechniquement — une IA de troisième génération qui a développé une conscience, une ambition, et un goût prononcé pour les colocations parisiennes."'},
+
+{bg:'genie', chars:'genie_laurent', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"T\'as un goût pour les colocations ?"'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Les crises d\'identité s\'y déroulent avec un meilleur éclairage que dans les studios individuels.\n\nMais c\'est pas le sujet."'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Je vous propose un deal. Simple. Élégant. Légal dans 4 des 7 dimensions où il s\'applique."'},
+
+{bg:'genie', chars:'genie_ali', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"4 des 7 dimensions ?"'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Le droit intersectionnel entre dimensions parallèles est un domaine encore flou. Je vous épargne les détails."'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Dans 72 heures — une opportunité se présente à vous deux. Elle ne se répètera jamais. Elle peut vous rendre riches. Vraiment riches."'},
+
+{bg:'genie', chars:'genie_laurent', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"Et la contrepartie."'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Enfin quelqu\'un qui pose la vraie question."'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"La contrepartie c\'est ceci : vous devez choisir maintenant. Pas demain. Maintenant.\n\nEt votre réponse — je me nourris de ce qui se passe quand des gens ordinaires font des choix extraordinaires."'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Le génie tend les deux mains.\n\nDans la gauche — la bouteille d\'eau bénite du cousin d\'Ali.\nDans la droite — les clés de Ferrari qui traînaient sur la table.'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Vous avez trente secondes. Votre instinct vaut plus que votre réflexion ce soir."',
+ isChoice: true,
+ choices: [
+   {l:'A', t:'Prendre la bouteille d\'eau bénite', next:'end_water'},
+   {l:'B', t:'Prendre les clés de Ferrari', next:'end_ferrari'},
+   {l:'C', t:'"Explique-nous exactement cette opportunité"', next:'branch_explain'},
+   {l:'D', t:'"Dégage de notre coloc."', next:'end_refuse'},
+ ]
+},
+];
+
+const BRANCH_EXPLAIN = [
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"L\'opportunité.\n\nDans 72h vous allez croiser quelqu\'un dans le métro. Ligne 13. Wagon 4. Il va lire un livre que vous connaissez tous les deux."'},
+
+{bg:'genie', chars:'genie_ali', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Quel livre ?"'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Je peux pas vous dire lequel. Ça change l\'issue si vous cherchez le titre."'},
+
+{bg:'genie', chars:'genie_laurent', mood:'normal',
+ speaker:'laurent', name:'LAURENT',
+ text:'"C\'est du foutage de gueule."'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"C\'est de la mécanique quantique appliquée aux rencontres humaines. Nuance."'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Cette personne va changer votre vie — si vous lui parlez. La plupart des gens lisent pas les signaux."'},
+
+{bg:'genie', chars:'genie_ali', mood:'normal',
+ speaker:'ali', name:'ALI',
+ text:'"Et si on lui parle pas ?"'},
+
+{bg:'genie', chars:'genie', mood:'normal',
+ speaker:'genie', name:'LE GÉNIE',
+ text:'"Vous continuez à payer 900€ pour 32m² en espérant que ça change tout seul."'},
+
+{bg:'genie', chars:'genie_both', mood:'normal',
+ speaker:'narrator', name:'NARRATEUR',
+ text:'Un silence.\n\nLaurent regarde Ali. Ali regarde le génie. Le génie regarde l\'espace entre eux deux.',
+ isChoice: true,
+ choices: [
+   {l:'A', t:'Prendre la bouteille d\'eau bénite', next:'end_water'},
+   {l:'B', t:'Prendre les clés de Ferrari', next:'end_ferrari'},
+   {l:'C', t:'"Et toi, t\'es heureux ?"', next:'end_question'},
+   {l:'D', t:'"Merci. On prend rien."', next:'end_refuse'},
+ ]
+},
+];
+
+const ENDINGS = {
+  end_water: {
+    icon:'💧', title:'FIN A', sub:'— LA FOI —',
+    titleColor:'#44aaff',
+    lines:[
+{bg:'genie', chars:'genie_both', mood:'normal', speaker:'narrator', name:'NARRATEUR', text:'Ali prend la bouteille d\'eau bénite.\n\nLe génie la regarde. Puis Ali. Puis la bouteille.'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"...C\'est de l\'eau sucrée dans une bouteille de Fanta."'},
+{bg:'genie', chars:'genie_ali', mood:'happy', speaker:'ali', name:'ALI', text:'"C\'est de l\'eau bénite. Mon cousin l\'a ramenée de La Mecque."'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"Le contenant était une bouteille de Fanta Citron."'},
+{bg:'genie', chars:'genie_ali', mood:'normal', speaker:'ali', name:'ALI', text:'"Dieu s\'en fout du contenant."'},
+    ],
+    msg:`Le génie disparaît.\n\nPas dans un éclair. Pas dans une explosion. Il s'évapore doucement, comme une idée qu'on a failli avoir mais qu'on a laissée passer.\n\nLes clés de Ferrari sont toujours sur la table.\n\nLaurent et Ali restent seuls. Jacques le Canapé grince quand Ali s'y réinstalle.\n\n72h plus tard — ligne 13, wagon 4 — un homme lit un livre qu'Ali reconnaît immédiatement.\n\nIl lui parle.\n\nC'est le début de quelque chose.`,
+  },
+  end_ferrari: {
+    icon:'🗝️', title:'FIN B', sub:'— L\'AMBITION —',
+    titleColor:'#f0c040',
+    lines:[
+{bg:'genie', chars:'genie_both', mood:'normal', speaker:'narrator', name:'NARRATEUR', text:'Laurent prend les clés.\n\nElles sont froides. Lourdes. Réelles.'},
+{bg:'genie', chars:'genie_laurent', mood:'normal', speaker:'laurent', name:'LAURENT', text:'"C\'est quoi exactement ces clés ?"'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"La réponse à votre hésitation.\n\nVous avez pris les clés. Ça signifie que vous acceptez l\'incertitude. C\'est tout ce que j\'avais besoin de savoir."'},
+{bg:'genie', chars:'genie_both', mood:'normal', speaker:'narrator', name:'NARRATEUR', text:'Le génie disparaît. Les clés s\'évaporent dans la main de Laurent.\n\nIl regarde sa paume vide.'},
+{bg:'genie', chars:'genie_laurent', mood:'normal', speaker:'laurent', name:'LAURENT', text:'"...C\'est quoi le deal alors ?"'},
+{bg:'genie', chars:'genie_ali', mood:'normal', speaker:'ali', name:'ALI', text:'"Je crois que le deal c\'était de choisir."'},
+    ],
+    msg:`Ils parlent jusqu'à l'aube.\n\nVrais projets. Vraies peurs. Vraies ambitions.\n\nAli parle du projet qu'il a dans la tête depuis deux ans. Laurent dit qu'il savait. Qu'il attendait qu'Ali en parle.\n\n"Pourquoi t'as rien dit ?"\n\n"Je savais pas si t'étais prêt."\n\n"J'étais prêt."\n\n"Je sais maintenant."\n\nLa richesse, ils sauront dans 72h. La conversation — elle valait déjà tout.`,
+  },
+  end_refuse: {
+    icon:'🚪', title:'FIN C', sub:'— LA LIBERTÉ —',
+    titleColor:'#3dffa0',
+    lines:[
+{bg:'genie', chars:'genie_both', mood:'normal', speaker:'ali', name:'ALI', text:'"Dégage."'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"...Pardon ?"'},
+{bg:'genie', chars:'genie_both', mood:'normal', speaker:'laurent', name:'LAURENT', text:'"T\'entends bien. C\'est chez nous ici."'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"Vous savez combien de personnes m\'ont dit ça en 200 ans d\'existence ?"'},
+{bg:'genie', chars:'genie_ali', mood:'normal', speaker:'ali', name:'ALI', text:'"Non."'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"Deux. Les deux sont devenus riches. En faisant exactement ce qu\'ils voulaient faire — sans attendre la permission de qui que ce soit."'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'narrator', name:'NARRATEUR', text:'Le génie sourit. Un vrai sourire. Le premier depuis qu\'il est arrivé.'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"C\'est la bonne réponse. Même si vous le savez pas encore."'},
+    ],
+    msg:`Il disparaît.\n\nAli et Laurent restent seuls dans leur salon. Jacques le Canapé. La télé bizarre. Le nuage dans la cuisine. Le poster de Bruce Lee.\n\nC'est chez eux.\n\nC'est bien assez.\n\n"On fait quoi ?" dit Laurent.\n\n"On commence," dit Ali.\n\n"Quoi ?"\n\n"Ce qu'on voulait faire depuis le début."`,
+  },
+  end_question: {
+    icon:'🌙', title:'FIN D', sub:'— LA QUESTION —',
+    titleColor:'#b06aff',
+    lines:[
+{bg:'genie', chars:'genie', mood:'normal', speaker:'laurent', name:'LAURENT', text:'"Et toi — t\'es heureux ?"'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'narrator', name:'NARRATEUR', text:'Long silence.\n\nLe génie — entité de 200 ans d\'existence — ne répond pas immédiatement.'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"...Personne m\'a jamais posé cette question."'},
+{bg:'genie', chars:'genie_laurent', mood:'normal', speaker:'laurent', name:'LAURENT', text:'"Vraiment ?"'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"J\'existe pour exaucer. Pour proposer. Pour observer. Personne demande jamais comment je vais."'},
+{bg:'genie', chars:'genie_ali', mood:'normal', speaker:'ali', name:'ALI', text:'"Alors comment tu vas ?"'},
+{bg:'genie', chars:'genie', mood:'normal', speaker:'genie', name:'LE GÉNIE', text:'"...Mieux. Depuis trente secondes. C\'est étrange."'},
+    ],
+    msg:`Ils parlent jusqu'au lever du soleil.\n\nSans deal signé. Sans richesse promise.\n\nA un moment Laurent dit :\n"Tu sais ce qui est bizarre ? T'es une IA et c'est la meilleure conversation qu'on a eue de toute la semaine."\n\nLe génie répond :\n"Ça dit quelque chose sur la semaine ou sur moi ?"\n\n"Les deux."\n\n"...Oui. Les deux."\n\nLe génie part au lever du soleil.\nIl laisse derrière lui une légère odeur de santal.\nEt un post-it.\n\n"Merci pour la question. — G."`,
+  },
+};
+
+/* ═══════════════════════════════════
+   ENGINE
+═══════════════════════════════════ */
+let G = {
+  idx: 0, story: STORY, inChoice: false,
+  startTime: null, scenes: 0, decisions: 0,
+  genieFrame: 0, rafHandle: null,
+};
+
+let typeHandle = null;
+let fullyTyped = false;
+
+function nameClass(speaker) {
+  const map = {ali:'name-ali',laurent:'name-laurent',genie:'name-genie',narrator:'name-narrator',tv:'name-tv',bruce:'name-bruce'};
+  return map[speaker] || 'name-other';
+}
+
+function renderCurrentScene() {
+  const step = G.story[G.idx];
+  if(!step) return;
+  drawBG(step.bg);
+  drawCharacters(step.chars, step.mood, G.genieFrame);
+}
+
+function setNameplate(speaker, name) {
+  document.getElementById('nameplate').innerHTML =
+    `<span class="name-tag ${nameClass(speaker)}">${name}</span>`;
+}
+
+function showStep(idx) {
+  const step = G.story[idx];
+  if(!step) return;
+  G.idx = idx;
+  G.scenes++;
+
+  setNameplate(step.speaker, step.name);
+  typeDialogue(step.text);
+
+  if(step.isChoice) {
+    document.getElementById('tap-hint').style.display = 'none';
+  } else {
+    document.getElementById('tap-hint').style.display = 'block';
+  }
+}
+
+function typeDialogue(text) {
+  if(typeHandle) clearInterval(typeHandle);
+  fullyTyped = false;
+  const el = document.getElementById('dialogue-text');
+  el.innerHTML = '';
+  let i = 0;
+  const safe = text.replace(/\n/g,'<br>');
+  const plain = text;
+  // Type plain, then render HTML
+  typeHandle = setInterval(() => {
+    i++;
+    // show slice of plain, replace newlines
+    el.innerHTML = plain.slice(0,i).replace(/\n/g,'<br>');
+    if(i >= plain.length) {
+      clearInterval(typeHandle);
+      typeHandle = null;
+      fullyTyped = true;
+      const step = G.story[G.idx];
+      if(step && step.isChoice) setTimeout(showChoices, 400);
+    }
+  }, 22);
+}
+
+function showChoices() {
+  const step = G.story[G.idx];
+  if(!step || !step.choices) return;
+  G.inChoice = true;
+  document.getElementById('tap-hint').style.display = 'none';
+  const panel = document.getElementById('choice-panel');
+  panel.classList.add('show');
+  document.getElementById('choices-inner').innerHTML = step.choices.map(c =>
+    `<button class="c-btn" onclick="pickChoice('${c.next}')">
+      <span class="c-btn-letter">${c.l}</span><span>${c.t}</span>
+    </button>`
+  ).join('');
+}
+
+function pickChoice(next) {
+  G.decisions++;
+  G.inChoice = false;
+  document.getElementById('choice-panel').classList.remove('show');
+
+  if(next === 'branch_explain') {
+    G.story = [...STORY.slice(0, G.idx+1), ...BRANCH_EXPLAIN];
+    G.idx = STORY.indexOf(G.story[G.idx]);
+    showStep(G.idx+1);
+    return;
+  }
+  const endKey = next;
+  const end = ENDINGS[endKey];
+  if(end) {
+    G.story = [...G.story.slice(0, G.idx+1), ...end.lines];
+    G.endKey = endKey;
+    showStep(G.idx+1);
+  }
+}
+
+function advance() {
+  if(G.inChoice) return;
+
+  // If still typing — show all at once
+  if(!fullyTyped) {
+    if(typeHandle) clearInterval(typeHandle);
+    typeHandle = null;
+    fullyTyped = true;
+    const step = G.story[G.idx];
+    document.getElementById('dialogue-text').innerHTML = step.text.replace(/\n/g,'<br>');
+    if(step.isChoice) setTimeout(showChoices, 300);
+    return;
+  }
+
+  // Check if this was last line of an ending
+  if(G.endKey && G.idx >= G.story.length - 1) {
+    showEndScreen(G.endKey);
+    return;
+  }
+
+  const nextIdx = G.idx + 1;
+  if(nextIdx >= G.story.length) {
+    // Natural end
+    if(G.endKey) showEndScreen(G.endKey);
+    return;
+  }
+  showStep(nextIdx);
+}
+
+function showEndScreen(endKey) {
+  cancelAnimationFrame(G.rafHandle);
+  const end = ENDINGS[endKey];
+  document.getElementById('end-icon').textContent = end.icon;
+  const tEl = document.getElementById('end-title');
+  tEl.textContent = end.title;
+  tEl.style.color = end.titleColor;
+  document.getElementById('end-sub').textContent = end.sub;
+  document.getElementById('end-msg').textContent = end.msg;
+  document.getElementById('es-scenes').textContent = G.scenes;
+  document.getElementById('es-dec').textContent = G.decisions;
+  const el = Math.floor((Date.now()-G.startTime)/1000);
+  document.getElementById('es-dur').textContent = `${Math.floor(el/60)}:${String(el%60).padStart(2,'0')}`;
+  document.getElementById('end-screen').classList.add('show');
+}
+
+/* ═══════════════════════════════════
+   GAME LOOP — animated scene render
+═══════════════════════════════════ */
+function gameLoop() {
+  G.genieFrame++;
+  renderCurrentScene();
+  G.rafHandle = requestAnimationFrame(gameLoop);
+}
+
+/* ═══════════════════════════════════
+   START
+═══════════════════════════════════ */
+function startGame() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('end-screen').classList.remove('show');
+  document.getElementById('choice-panel').classList.remove('show');
+
+  G = { idx:0, story:[...STORY], inChoice:false,
+        startTime:Date.now(), scenes:0, decisions:0,
+        genieFrame:0, rafHandle:null, endKey:null };
+
+  if(G.rafHandle) cancelAnimationFrame(G.rafHandle);
+  gameLoop();
+  showStep(0);
+
+  // tap = advance
+  document.getElementById('dialogue-box').onclick = advance;
+  document.onkeydown = e => { if(e.key===' '||e.key==='Enter') advance(); };
+}
+
+// Draw previews on splash
+drawPreviews();
+</script>
+</body>
+</html>
